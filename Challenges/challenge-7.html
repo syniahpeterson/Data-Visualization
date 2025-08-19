@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Data Visualization - Challenge 7</title>
+    <style>
+      .bar {
+        width: 25px;
+        height: 100px;
+        display: inline-block;
+        background-color: blue;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script>
+      const dataset = [12, 31, 22, 17, 25, 18, 29, 14, 9];
+
+      d3.select("body")?.selectAll("div").data(dataset).enter().append("div");
+      // Add your code below this line
+      d3.select("div").attr("class", "bar");
+      // Add your code above this line
+    </script>
+  </body>
+</html>
