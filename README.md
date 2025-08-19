@@ -1,1 +1,11 @@
-# Data-Visualization
+# Challenges
+- [Challenge 1](https://syniahpeterson.github.io/Data-Visualization/Challenges/challenge-1.html) 
+- [Challenge 2](https://syniahpeterson.github.io/Data-Visualization/Challenges/challenge-2.html) 
+- [Challenge 3](https://syniahpeterson.github.io/Data-Visualization/Challenges/challenge-3.html) 
+- [Challenge 4](https://syniahpeterson.github.io/Data-Visualization/Challenges/challenge-4.html) 
+- [Challenge 5](https://syniahpeterson.github.io/Data-Visualization/Challenges/challenge-5.html) 
+- [Challenge 6](https://syniahpeterson.github.io/Data-Visualization/Challenges/challenge-6.html) 
+- [Challenge 7](https://syniahpeterson.github.io/Data-Visualization/Challenges/challenge-7.html) 
+- [Challenge 8](https://syniahpeterson.github.io/Data-Visualization/Challenges/challenge-8.html) 
+- [Challenge 9](https://syniahpeterson.github.io/Data-Visualization/Challenges/challenge-9.html) 
+- [Challenge 10](https://syniahpeterson.github.io/Data-Visualization/Challenges/challenge-10.html) 
