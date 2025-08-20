@@ -9,3 +9,4 @@
 - [Challenge 8](https://syniahpeterson.github.io/Data-Visualization/Challenges/challenge-8.html) 
 - [Challenge 9](https://syniahpeterson.github.io/Data-Visualization/Challenges/challenge-9.html) 
 - [Challenge 10](https://syniahpeterson.github.io/Data-Visualization/Challenges/challenge-10.html) 
+- [Challenge 11](https://syniahpeterson.github.io/Data-Visualization/Challenges/challenge-11.html) 
