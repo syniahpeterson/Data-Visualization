@@ -3,14 +3,21 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Data Visualization JSON-AJAX Challenge 2</title>
+    <title>Data Visualization JSON-AJAX Challenge 5</title>
     <script>
       document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("getMessage").onclick = function () {
-          // Add your code below this line
-          document.getElementsByClassName("message")[0].textContent =
-            "Here is the message";
-          // Add your code above this line
+          const req = new XMLHttpRequest();
+          req.open("GET", "./cats.json", true);
+          req.send();
+          req.onload = function () {
+            const json = JSON.parse(req.responseText);
+            document.getElementsByClassName("message")[0].innerHTML =
+              JSON.stringify(json);
+            // Add your code below this line
+            console.log(json[2].codeNames[1]);
+            // Add your code above this line
+          };
         };
       });
     </script>

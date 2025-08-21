@@ -32,3 +32,6 @@
 # JSON APIs and AJAX Challenges
 - [Challenge 1](https://syniahpeterson.github.io/Data-Visualization/JSON-AJAX/challenge-1.html) 
 - [Challenge 2](https://syniahpeterson.github.io/Data-Visualization/JSON-AJAX/challenge-2.html) 
+- [Challenge 3](https://syniahpeterson.github.io/Data-Visualization/JSON-AJAX/challenge-3.html) 
+- [Challenge 4](https://syniahpeterson.github.io/Data-Visualization/JSON-AJAX/challenge-4.html) 
+- [Challenge 5](https://syniahpeterson.github.io/Data-Visualization/JSON-AJAX/challenge-5.html) 
