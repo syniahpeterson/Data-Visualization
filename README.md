@@ -1,4 +1,4 @@
-# Challenges
+# D3 Challenges
 - [Challenge 1](https://syniahpeterson.github.io/Data-Visualization/Challenges/challenge-1.html) 
 - [Challenge 2](https://syniahpeterson.github.io/Data-Visualization/Challenges/challenge-2.html) 
 - [Challenge 3](https://syniahpeterson.github.io/Data-Visualization/Challenges/challenge-3.html) 
@@ -28,3 +28,7 @@
 - [Challenge 27](https://syniahpeterson.github.io/Data-Visualization/Challenges/challenge-27.html) 
 - [Challenge 28](https://syniahpeterson.github.io/Data-Visualization/Challenges/challenge-28.html) 
 - [Challenge 29](https://syniahpeterson.github.io/Data-Visualization/Challenges/challenge-29.html) 
+
+# JSON APIs and AJAX Challenges
+- [Challenge 1](https://syniahpeterson.github.io/Data-Visualization/JSON-AJAX/challenge-1.html) 
+- [Challenge 2](https://syniahpeterson.github.io/Data-Visualization/JSON-AJAX/challenge-2.html) 
