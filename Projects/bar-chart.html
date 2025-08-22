@@ -116,7 +116,6 @@
             .selectAll("text")
             .style("font-size", `${Math.max(8, w / 100)}px`);
 
-          // Bar width, responsive and prevents overlap
           let barWidth = (w - 2 * padding) / data.length;
           if (w < 600)
             barWidth = Math.min(barWidth * 2, (w - 2 * padding) / data.length);
@@ -140,29 +139,41 @@
             .attr("data-gdp", (d) => d[1]);
 
           const tooltip = d3.select("#tooltip");
+          let tooltipVisible = false;
 
-          // Tooltip events for hover (desktop) and click/tap (mobile)
+          // Hide tooltip if clicking outside bars
+          d3.select("body").on("click", function (event) {
+            const isBar = event.target.tagName === "rect";
+            if (!isBar && tooltipVisible) {
+              tooltip.style("opacity", 0);
+              tooltipVisible = false;
+            }
+          });
+
           svg
             .selectAll(".bar")
             .on("mouseover", function (event, d) {
-              tooltip
-                .style("opacity", 1)
-                .html(`Date: ${d[0]}<br>GDP: $${d[1]} Billion`)
-                .attr("data-date", d[0])
-                .style("left", event.pageX + 10 + "px")
-                .style("top", event.pageY - 28 + "px");
+              if (!tooltipVisible) {
+                tooltip
+                  .style("opacity", 1)
+                  .html(`Date: ${d[0]}<br>GDP: $${d[1]} Billion`)
+                  .attr("data-date", d[0])
+                  .style("left", event.pageX + 10 + "px")
+                  .style("top", event.pageY - 28 + "px");
+              }
             })
             .on("mouseout", function () {
-              tooltip.style("opacity", 0);
+              if (!tooltipVisible) tooltip.style("opacity", 0);
             })
             .on("click", function (event, d) {
-              const isVisible = tooltip.style("opacity") == 1;
+              tooltipVisible = !tooltipVisible;
               tooltip
-                .style("opacity", isVisible ? 0 : 1)
+                .style("opacity", tooltipVisible ? 1 : 0)
                 .html(`Date: ${d[0]}<br>GDP: $${d[1]} Billion`)
                 .attr("data-date", d[0])
                 .style("left", event.pageX + 10 + "px")
                 .style("top", event.pageY - 28 + "px");
+              event.stopPropagation();
             });
 
           // Axis labels
