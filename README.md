@@ -35,3 +35,8 @@
 - [Challenge 3](https://syniahpeterson.github.io/Data-Visualization/JSON-AJAX/challenge-3.html) 
 - [Challenge 4](https://syniahpeterson.github.io/Data-Visualization/JSON-AJAX/challenge-4.html) 
 - [Challenge 5](https://syniahpeterson.github.io/Data-Visualization/JSON-AJAX/challenge-5.html) 
+- [Challenge 6](https://syniahpeterson.github.io/Data-Visualization/JSON-AJAX/challenge-6.html) 
+- [Challenge 7](https://syniahpeterson.github.io/Data-Visualization/JSON-AJAX/challenge-7.html) 
+- [Challenge 8](https://syniahpeterson.github.io/Data-Visualization/JSON-AJAX/challenge-8.html) 
+- [Challenge 9](https://syniahpeterson.github.io/Data-Visualization/JSON-AJAX/challenge-9.html) 
+- [Challenge 10](https://syniahpeterson.github.io/Data-Visualization/JSON-AJAX/challenge-10.html) 
