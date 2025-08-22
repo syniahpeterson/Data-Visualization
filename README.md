@@ -40,3 +40,6 @@
 - [Challenge 8](https://syniahpeterson.github.io/Data-Visualization/JSON-AJAX/challenge-8.html) 
 - [Challenge 9](https://syniahpeterson.github.io/Data-Visualization/JSON-AJAX/challenge-9.html) 
 - [Challenge 10](https://syniahpeterson.github.io/Data-Visualization/JSON-AJAX/challenge-10.html) 
+
+# Final 5 Projects
+- [US GDP Bar Chart](https://syniahpeterson.github.io/Data-Visualization/Projects/bar-chart.html) 

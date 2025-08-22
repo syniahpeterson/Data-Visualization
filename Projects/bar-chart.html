@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>US GDP Bar Chart</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+      body {
+        font-family: sans-serif;
+        background: #1c1c1c;
+        margin: 0;
+        padding: 0;
+      }
+
+      h1 {
+        color: white;
+        text-decoration: underline;
+        text-decoration-color: #9b5de5;
+        text-align: center;
+        font-size: clamp(18px, 3vw, 28px);
+        margin: 20px 0;
+      }
+
+      #chart-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 10px;
+      }
+
+      svg {
+        background: #e0e0e0;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        width: 100%;
+        max-width: 900px;
+        height: auto;
+      }
+
+      .bar {
+        fill: #9b5de5;
+        transition: fill 0.2s;
+      }
+
+      .bar:hover {
+        fill: orange;
+      }
+
+      #tooltip {
+        position: absolute;
+        opacity: 0;
+        background: white;
+        border: 1px solid #333;
+        border-radius: 4px;
+        padding: 8px;
+        font-size: clamp(10px, 1.5vw, 14px);
+        pointer-events: none;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        color: #4b0082;
+      }
+    </style>
+  </head>
+  <body>
+    <h1 id="title">US GDP Bar Chart</h1>
+    <div id="chart-container">
+      <svg></svg>
+    </div>
+    <div id="tooltip"></div>
+
+    <script>
+      const url =
+        "https://raw.githubusercontent.com/freeCodeCamp/ProjectReferenceData/master/GDP-data.json";
+
+      d3.json(url).then((dataset) => {
+        const data = dataset.data;
+        const h = 500;
+        const padding = 60;
+        const svg = d3.select("svg");
+
+        function drawChart() {
+          svg.selectAll("*").remove();
+
+          const w = parseInt(svg.style("width"));
+          svg.attr("height", h);
+
+          const xScale = d3
+            .scaleTime()
+            .domain([
+              d3.min(data, (d) => new Date(d[0])),
+              d3.max(data, (d) => new Date(d[0])),
+            ])
+            .range([padding, w - padding]);
+
+          const yScale = d3
+            .scaleLinear()
+            .domain([0, d3.max(data, (d) => d[1])])
+            .range([h - padding, padding]);
+
+          const xAxis = d3.axisBottom(xScale);
+          const yAxis = d3.axisLeft(yScale);
+
+          svg
+            .append("g")
+            .attr("id", "x-axis")
+            .attr("transform", `translate(0, ${h - padding})`)
+            .call(xAxis)
+            .selectAll("text")
+            .style("font-size", `${Math.max(8, w / 100)}px`);
+
+          svg
+            .append("g")
+            .attr("id", "y-axis")
+            .attr("transform", `translate(${padding}, 0)`)
+            .call(yAxis)
+            .selectAll("text")
+            .style("font-size", `${Math.max(8, w / 100)}px`);
+
+          // Bar width, responsive and prevents overlap
+          let barWidth = (w - 2 * padding) / data.length;
+          if (w < 600)
+            barWidth = Math.min(barWidth * 2, (w - 2 * padding) / data.length);
+          else if (w < 900)
+            barWidth = Math.min(
+              barWidth * 1.5,
+              (w - 2 * padding) / data.length
+            );
+
+          svg
+            .selectAll("rect")
+            .data(data)
+            .enter()
+            .append("rect")
+            .attr("class", "bar")
+            .attr("x", (d) => xScale(new Date(d[0])))
+            .attr("y", (d) => yScale(d[1]))
+            .attr("width", barWidth)
+            .attr("height", (d) => h - padding - yScale(d[1]))
+            .attr("data-date", (d) => d[0])
+            .attr("data-gdp", (d) => d[1]);
+
+          const tooltip = d3.select("#tooltip");
+
+          // Tooltip events for hover (desktop) and click/tap (mobile)
+          svg
+            .selectAll(".bar")
+            .on("mouseover", function (event, d) {
+              tooltip
+                .style("opacity", 1)
+                .html(`Date: ${d[0]}<br>GDP: $${d[1]} Billion`)
+                .attr("data-date", d[0])
+                .style("left", event.pageX + 10 + "px")
+                .style("top", event.pageY - 28 + "px");
+            })
+            .on("mouseout", function () {
+              tooltip.style("opacity", 0);
+            })
+            .on("click", function (event, d) {
+              const isVisible = tooltip.style("opacity") == 1;
+              tooltip
+                .style("opacity", isVisible ? 0 : 1)
+                .html(`Date: ${d[0]}<br>GDP: $${d[1]} Billion`)
+                .attr("data-date", d[0])
+                .style("left", event.pageX + 10 + "px")
+                .style("top", event.pageY - 28 + "px");
+            });
+
+          // Axis labels
+          svg
+            .append("text")
+            .attr("x", w / 2)
+            .attr("y", h - 10)
+            .attr("text-anchor", "middle")
+            .style("font-size", `${Math.max(10, w / 80)}px`)
+            .text("Year");
+
+          svg
+            .append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("x", -h / 2)
+            .attr("y", 20)
+            .attr("text-anchor", "middle")
+            .style("font-size", `${Math.max(10, w / 80)}px`)
+            .text("GDP (Billion USD)");
+        }
+
+        drawChart();
+        window.addEventListener("resize", drawChart);
+      });
+    </script>
+  </body>
+</html>
