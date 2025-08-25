@@ -1,11 +1,235 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Heat Map</title>
-</head>
-<body>
-    
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Global Temperature Heat Map</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <style>
+      :root {
+        --bg-color: #ffffff;
+        --text-color: #111111;
+        --tooltip-bg: #f0f0f0;
+        --tooltip-text: #111111;
+      }
+      body.dark {
+        --bg-color: #121212;
+        --text-color: #eaeaea;
+        --tooltip-bg: #333333;
+        --tooltip-text: #eaeaea;
+      }
+      body {
+        font-family: sans-serif;
+        text-align: center;
+        margin: 0;
+        padding: 20px;
+        background: var(--bg-color);
+        color: var(--text-color);
+        transition: background 0.3s, color 0.3s;
+        overflow-x: auto;
+      }
+      #container {
+        max-width: 100%;
+        margin: auto;
+      }
+      #container > div:first-child {
+        margin-bottom: 20px;
+      }
+      #chart-wrapper {
+        overflow-x: auto;
+        margin: auto;
+      }
+      #tooltip {
+        position: absolute;
+        padding: 8px;
+        border-radius: 5px;
+        font-size: 14px;
+        pointer-events: none;
+        visibility: hidden;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        background: var(--tooltip-bg);
+        color: var(--tooltip-text);
+        transition: background 0.3s, color 0.3s;
+      }
+      .cell {
+        stroke: none;
+      }
+      #theme-toggle {
+        margin-bottom: 20px;
+        padding: 8px 16px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        background: #277f8e;
+        color: #fff;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="container">
+      <div>
+        <button id="theme-toggle">Toggle Dark/Light</button>
+        <h1 id="title">Global Temperature Heat Map</h1>
+        <p id="description">
+          Monthly Global Land-Surface Temperature (1753–2015)
+        </p>
+      </div>
+      <div id="chart-wrapper">
+        <div id="chart"></div>
+      </div>
+      <div id="legend"></div>
+      <div id="tooltip"></div>
+    </div>
+
+    <script>
+      const url =
+        "https://raw.githubusercontent.com/freeCodeCamp/ProjectReferenceData/master/global-temperature.json";
+      const w = 1800,
+        h = 600,
+        padding = 100;
+      let mobileTooltipVisible = false;
+
+      d3.json(url).then((data) => {
+        const baseTemp = data.baseTemperature;
+        const dataset = data.monthlyVariance;
+        const years = dataset.map((d) => d.year);
+
+        const xScale = d3
+          .scaleLinear()
+          .domain([d3.min(years), d3.max(years)])
+          .range([padding, w - padding]);
+        const yScale = d3
+          .scaleBand()
+          .domain(d3.range(0, 12))
+          .range([padding, h - padding]);
+
+        const svg = d3
+          .select("#chart")
+          .append("svg")
+          .attr("width", w)
+          .attr("height", h);
+
+        // Axes
+        const xAxis = d3.axisBottom(xScale).tickFormat(d3.format("d"));
+        const yAxis = d3
+          .axisLeft(yScale)
+          .tickFormat((m) => d3.timeFormat("%B")(new Date(0, m)));
+        svg
+          .append("g")
+          .attr("id", "x-axis")
+          .attr("transform", `translate(0, ${h - padding})`)
+          .call(xAxis);
+        svg
+          .append("g")
+          .attr("id", "y-axis")
+          .attr("transform", `translate(${padding}, 0)`)
+          .call(yAxis);
+
+        const colorScale = d3
+          .scaleSequential()
+          .interpolator(d3.interpolateViridis)
+          .domain([
+            d3.max(dataset, (d) => baseTemp + d.variance),
+            d3.min(dataset, (d) => baseTemp + d.variance),
+          ]);
+
+        const tooltip = d3.select("#tooltip");
+
+        // Cells
+        svg
+          .selectAll(".cell")
+          .data(dataset)
+          .enter()
+          .append("rect")
+          .attr("class", "cell")
+          .attr("data-month", (d) => d.month - 1)
+          .attr("data-year", (d) => d.year)
+          .attr("data-temp", (d) => baseTemp + d.variance)
+          .attr("x", (d) => xScale(d.year))
+          .attr("y", (d) => yScale(d.month - 1))
+          .attr("width", (w - 2 * padding) / (years.length / 12))
+          .attr("height", yScale.bandwidth())
+          .attr("fill", (d) => colorScale(baseTemp + d.variance))
+          // Desktop tooltip
+          .on("mouseover", (event, d) => {
+            if (window.innerWidth > 600) {
+              tooltip
+                .style("visibility", "visible")
+                .attr("data-year", d.year)
+                .html(
+                  `${d.year} - ${d3.timeFormat("%B")(
+                    new Date(0, d.month - 1)
+                  )}<br>
+                   Temp: ${(baseTemp + d.variance).toFixed(2)}℃<br>
+                   Variance: ${d.variance.toFixed(2)}℃`
+                )
+                .style("left", event.pageX + 10 + "px")
+                .style("top", event.pageY - 30 + "px");
+            }
+          })
+          .on("mouseout", () => {
+            if (window.innerWidth > 600) tooltip.style("visibility", "hidden");
+          })
+          // Mobile tooltip
+          .on("click", (event, d) => {
+            if (window.innerWidth <= 600) {
+              event.stopPropagation();
+              tooltip
+                .style("visibility", "visible")
+                .attr("data-year", d.year)
+                .html(
+                  `${d.year} - ${d3.timeFormat("%B")(
+                    new Date(0, d.month - 1)
+                  )}<br>
+                     Temp: ${(baseTemp + d.variance).toFixed(2)}℃<br>
+                     Variance: ${d.variance.toFixed(2)}℃`
+                )
+                .style("left", event.pageX + 10 + "px")
+                .style("top", event.pageY - 30 + "px");
+              mobileTooltipVisible = true;
+            }
+          });
+
+        // Legend
+        const legendColors = d3.range(-2, 3).map((v) => baseTemp + v);
+        const legendScale = d3
+          .scaleLinear()
+          .domain([d3.min(legendColors), d3.max(legendColors)])
+          .range([0, 400]);
+        const legendAxis = d3.axisBottom(legendScale).ticks(6);
+        const legend = d3
+          .select("#legend")
+          .append("svg")
+          .attr("width", 450)
+          .attr("height", 60);
+        legend
+          .selectAll("rect")
+          .data(legendColors)
+          .enter()
+          .append("rect")
+          .attr("x", (d) => legendScale(d))
+          .attr("y", 0)
+          .attr("width", 60)
+          .attr("height", 20)
+          .attr("fill", (d) => colorScale(d));
+        legend
+          .append("g")
+          .attr("transform", "translate(0,20)")
+          .call(legendAxis);
+      });
+
+      // Theme toggle
+      document.getElementById("theme-toggle").addEventListener("click", () => {
+        document.body.classList.toggle("dark");
+      });
+
+      // Hide mobile tooltip when clicking elsewhere
+      document.addEventListener("click", () => {
+        if (window.innerWidth <= 600 && mobileTooltipVisible) {
+          d3.select("#tooltip").style("visibility", "hidden");
+          mobileTooltipVisible = false;
+        }
+      });
+    </script>
+  </body>
 </html>
