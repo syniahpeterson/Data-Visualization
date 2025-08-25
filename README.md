@@ -43,4 +43,4 @@
 
 # Final 5 Projects
 - [US GDP Bar Chart](https://syniahpeterson.github.io/Data-Visualization/Projects/bar-chart.html) 
-- [Cycling Scatterplot Graph](https://syniahpeterson.github.io/Data-Visualization/Projects/scatterplot-grapht.html) 
+- [Cycling Scatterplot Graph](https://syniahpeterson.github.io/Data-Visualization/Projects/scatterplot-graph.html)
