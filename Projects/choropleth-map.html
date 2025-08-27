@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>US Education Attainment Choropleth Map</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://d3js.org/topojson.v3.min.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        margin: 0;
+        padding: 0;
+      }
+
+      #mode-toggle {
+        margin: 10px;
+        padding: 6px 12px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      #container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        overflow-x: auto;
+      }
+
+      svg {
+        max-width: 100%;
+        height: auto;
+      }
+
+      #tooltip {
+        background: white;
+        border: 1px solid #333;
+        padding: 6px;
+        border-radius: 5px;
+        pointer-events: none;
+        font-size: 13px;
+      }
+
+      #legend {
+        margin-top: 20px;
+      }
+
+      /* Light mode */
+      body.light {
+        background: #fff;
+        color: #222;
+      }
+
+      body.light .county {
+        stroke: #fff;
+      }
+
+      body.light #mode-toggle {
+        background: #f3f3f3;
+        color: #222;
+      }
+
+      /* Dark mode */
+      body.dark {
+        background: #121212;
+        color: #eee;
+      }
+
+      body.dark .county {
+        stroke: #121212;
+      }
+
+      body.dark #tooltip {
+        background: #222;
+        color: #fff;
+      }
+
+      body.dark #mode-toggle {
+        background: #333;
+        color: #eee;
+      }
+    </style>
+  </head>
+  <body class="light">
+    <button id="mode-toggle">🌙 Dark Mode</button>
+
+    <h1 id="title">United States Educational Attainment</h1>
+    <p id="description">
+      Percentage of adults age 25 and older with a bachelor's degree or higher
+      (2010-2014)
+    </p>
+
+    <div id="container">
+      <svg id="choropleth"></svg>
+      <div id="tooltip"></div>
+    </div>
+
+    <div id="legend"></div>
+
+    <script>
+      const eduUrl =
+        "https://cdn.freecodecamp.org/testable-projects-fcc/data/choropleth_map/for_user_education.json";
+      const countyUrl =
+        "https://cdn.freecodecamp.org/testable-projects-fcc/data/choropleth_map/counties.json";
+
+      const w = 960,
+        h = 600;
+      const svg = d3.select("#choropleth").attr("width", w).attr("height", h);
+      const tooltip = d3
+        .select("#tooltip")
+        .style("position", "absolute")
+        .style("visibility", "hidden");
+
+      let educationData, countyData, minEdu, maxEdu, colorScale;
+
+      // Load datasets
+      Promise.all([d3.json(countyUrl), d3.json(eduUrl)]).then(
+        ([us, education]) => {
+          countyData = topojson.feature(us, us.objects.counties).features;
+          educationData = education;
+          minEdu = d3.min(education, (d) => d.bachelorsOrHigher);
+          maxEdu = d3.max(education, (d) => d.bachelorsOrHigher);
+          drawMap();
+        }
+      );
+
+      // Get color scale based on theme
+      function getColorScale() {
+        return d3
+          .scaleQuantize()
+          .domain([minEdu, maxEdu])
+          .range(
+            document.body.classList.contains("dark")
+              ? d3.schemeBlues[6]
+              : d3.schemeReds[6]
+          );
+      }
+
+      // Draw map + legend
+      function drawMap() {
+        colorScale = getColorScale();
+        svg.selectAll("*").remove();
+        d3.select("#legend").selectAll("*").remove();
+
+        // Counties
+        svg
+          .append("g")
+          .selectAll("path")
+          .data(countyData)
+          .enter()
+          .append("path")
+          .attr("class", "county")
+          .attr("d", d3.geoPath())
+          .attr("data-fips", (d) => d.id)
+          .attr("data-education", (d) => {
+            const result = educationData.find((e) => e.fips === d.id);
+            return result ? result.bachelorsOrHigher : 0;
+          })
+          .attr("fill", (d) => {
+            const result = educationData.find((e) => e.fips === d.id);
+            return result ? colorScale(result.bachelorsOrHigher) : "#ccc";
+          })
+          .on("mouseover", (event, d) => {
+            const result = educationData.find((e) => e.fips === d.id);
+            tooltip
+              .style("visibility", "visible")
+              .style("left", event.pageX + 10 + "px")
+              .style("top", event.pageY - 28 + "px")
+              .attr("data-education", result.bachelorsOrHigher)
+              .html(
+                `${result.area_name}, ${result.state}: ${result.bachelorsOrHigher}%`
+              );
+          })
+          .on("mouseout", () => tooltip.style("visibility", "hidden"));
+
+        // Legend
+        const legendWidth = 300,
+          legendHeight = 10;
+        const legendScale = d3
+          .scaleLinear()
+          .domain([minEdu, maxEdu])
+          .range([0, legendWidth]);
+        const legendAxis = d3
+          .axisBottom(legendScale)
+          .tickFormat((d) => d + "%")
+          .ticks(6);
+
+        const legend = d3
+          .select("#legend")
+          .append("svg")
+          .attr("width", legendWidth + 50)
+          .attr("height", 50);
+
+        legend
+          .selectAll("rect")
+          .data(
+            colorScale.range().map((c) => {
+              const d = colorScale.invertExtent(c);
+              return [d[0], d[1], c];
+            })
+          )
+          .enter()
+          .append("rect")
+          .attr("x", (d) => legendScale(d[0]))
+          .attr("y", 0)
+          .attr("width", (d) => legendScale(d[1]) - legendScale(d[0]))
+          .attr("height", legendHeight)
+          .attr("fill", (d) => d[2]);
+
+        legend
+          .append("g")
+          .attr("transform", `translate(0, ${legendHeight})`)
+          .call(legendAxis);
+      }
+
+      // Theme toggle with transitions
+      document.getElementById("mode-toggle").addEventListener("click", () => {
+        document.body.classList.toggle("dark");
+        document.body.classList.toggle("light");
+
+        const btn = document.getElementById("mode-toggle");
+        btn.textContent = document.body.classList.contains("dark")
+          ? "☀️ Light Mode"
+          : "🌙 Dark Mode";
+
+        const newScale = getColorScale();
+
+        // Smoothly transition county fills
+        svg
+          .selectAll(".county")
+          .transition()
+          .duration(800)
+          .attr("fill", (d) => {
+            const result = educationData.find((e) => e.fips === d.id);
+            return result ? newScale(result.bachelorsOrHigher) : "#ccc";
+          });
+
+        // Redraw legend
+        d3.select("#legend").selectAll("*").remove();
+        const legendWidth = 300,
+          legendHeight = 10;
+        const legendScale = d3
+          .scaleLinear()
+          .domain([minEdu, maxEdu])
+          .range([0, legendWidth]);
+        const legendAxis = d3
+          .axisBottom(legendScale)
+          .tickFormat((d) => d + "%")
+          .ticks(6);
+
+        const legend = d3
+          .select("#legend")
+          .append("svg")
+          .attr("width", legendWidth + 50)
+          .attr("height", 50);
+
+        legend
+          .selectAll("rect")
+          .data(
+            newScale.range().map((c) => {
+              const d = newScale.invertExtent(c);
+              return [d[0], d[1], c];
+            })
+          )
+          .enter()
+          .append("rect")
+          .attr("x", (d) => legendScale(d[0]))
+          .attr("y", 0)
+          .attr("width", (d) => legendScale(d[1]) - legendScale(d[0]))
+          .attr("height", legendHeight)
+          .attr("fill", (d) => d[2]);
+
+        legend
+          .append("g")
+          .attr("transform", `translate(0, ${legendHeight})`)
+          .call(legendAxis);
+      });
+    </script>
+  </body>
+</html>
