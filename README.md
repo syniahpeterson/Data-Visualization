@@ -47,3 +47,8 @@
 - [Global Temperature Heat Map](https://syniahpeterson.github.io/Data-Visualization/Projects/heat-map.html)
 - [US Education Attainment Choropleth Map](https://syniahpeterson.github.io/Data-Visualization/Projects/choropleth-map.html)
 - [Treemap Diagram](https://syniahpeterson.github.io/Data-Visualization/Projects/treemap-diagram.html)
+
+
+
+  
+[Data Visualization Certification](https://www.freecodecamp.org/certification/syniahpeterson/data-visualization)   
