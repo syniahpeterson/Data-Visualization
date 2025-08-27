@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Metadata, title, D3.js library, and styles -->
+    <meta charset="UTF-8" />
+    <title>Treemap Diagram</title>
+    <!-- D3.js library -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+      /* Layout, navigation, treemap, tooltip, legend styles */
+      body {
+        font-family: sans-serif;
+        margin: 0;
+        background: #fafafa;
+      }
+
+      nav {
+        background: #333;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+        padding: 10px;
+      }
+
+      .nav-button {
+        flex: 1 1 auto;
+        min-width: 120px;
+        padding: 10px 15px;
+        border: none;
+        cursor: pointer;
+        background: #555;
+        color: #eee;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: background 0.2s;
+      }
+
+      .nav-button:hover {
+        background: #666;
+      }
+
+      .nav-button.active {
+        background: #e75480;
+        color: #fff;
+      }
+
+      #title {
+        text-align: center;
+        font-size: 24px;
+        margin: 20px 0 10px;
+      }
+
+      #description {
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 16px;
+        color: #444;
+      }
+
+      #treemap-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow-x: auto;
+        width: 100%;
+      }
+
+      .tile {
+        stroke: white;
+        stroke-width: 1;
+        cursor: pointer;
+        transition: opacity 0.2s;
+      }
+
+      .tile:hover {
+        opacity: 0.8;
+      }
+
+      #tooltip {
+        position: absolute;
+        background: rgba(0, 0, 0, 0.85);
+        color: white;
+        padding: 6px 10px;
+        border-radius: 4px;
+        pointer-events: none;
+        font-size: 13px;
+        opacity: 0;
+        transition: opacity 0.2s;
+        max-width: 220px;
+        line-height: 1.3;
+        z-index: 10;
+      }
+
+      #legend {
+        display: block;
+        max-width: 100%;
+        overflow-x: auto;
+        background: #fff;
+        margin: 20px auto;
+      }
+
+      #treemap {
+        display: block;
+        margin: 0 auto;
+        max-width: 100%;
+        height: auto;
+      }
+
+      @media (max-width: 600px) {
+        #title {
+          font-size: 20px;
+        }
+        #description {
+          font-size: 14px;
+        }
+        .nav-button {
+          font-size: 14px;
+          padding: 8px 10px;
+        }
+        #treemap-container {
+          padding: 0 5px;
+        }
+        #treemap {
+          width: 100%;
+          height: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation for dataset selection -->
+    <nav>
+      <button class="nav-button" data-dataset="video">Video Game Sales</button>
+      <button class="nav-button" data-dataset="movies">Movie Sales</button>
+      <button class="nav-button" data-dataset="kickstarter">
+        Kickstarter Pledges
+      </button>
+    </nav>
+
+    <!-- Main title -->
+    <h1 id="title">Treemap Diagram</h1>
+    <!-- Description -->
+    <p id="description">A graphical representation of hierarchical datasets.</p>
+
+    <!-- Tooltip for data on hover -->
+    <div id="tooltip"></div>
+    <!-- Treemap SVG -->
+    <div id="treemap-container">
+      <svg id="treemap" width="960" height="570"></svg>
+    </div>
+    <!-- Legend SVG -->
+    <svg id="legend" width="960" height="120"></svg>
+
+    <script>
+      // Data loading, treemap rendering, and interactivity
+      // Dataset URLs and metadata
+      const datasets = {
+        video: {
+          url: "https://cdn.freecodecamp.org/testable-projects-fcc/data/tree_map/video-game-sales-data.json",
+          title: "Video Game Sales",
+          description: "Top 100 Most Sold Video Games Grouped by Platform",
+        },
+        movies: {
+          url: "https://cdn.freecodecamp.org/testable-projects-fcc/data/tree_map/movie-data.json",
+          title: "Movie Sales",
+          description: "Top 100 Highest Grossing Movies Grouped By Genre",
+        },
+        kickstarter: {
+          url: "https://cdn.freecodecamp.org/testable-projects-fcc/data/tree_map/kickstarter-funding-data.json",
+          title: "Kickstarter Pledges",
+          description:
+            "Top 100 Most Pledged Kickstarter Campaigns Grouped By Category",
+        },
+      };
+
+      const w = 960;
+      const h = 570;
+      const svg = d3.select("#treemap");
+      const tooltip = d3.select("#tooltip");
+      const legend = d3.select("#legend");
+      const heading = document.getElementById("title");
+      const description = document.getElementById("description");
+
+      // Helper: wrap and truncate text in treemap tiles
+      function wrapAndTruncateText(selection, d) {
+        const node = selection;
+        const words = d.data.name.split(/\s+/);
+        let line = [];
+        let lineNumber = 0;
+        const lineHeight = 10;
+        const width = d.x1 - d.x0;
+        const y = 12;
+        node.text("");
+        let placed = false;
+
+        for (let i = 0; i < words.length; i++) {
+          line.push(words[i]);
+          node.text(line.join(" "));
+          if (node.node().getComputedTextLength() > width - 6) {
+            if (line.length === 1) {
+              node.text(words[i].slice(0, Math.max(1, width / 7)) + "…");
+              placed = true;
+              break;
+            }
+            line.pop();
+            node.text(line.join(" "));
+            line = [words[i]];
+            lineNumber++;
+            if (y + lineNumber * lineHeight < d.y1 - d.y0) {
+              node
+                .append("tspan")
+                .attr("x", 4)
+                .attr("y", y + lineNumber * lineHeight)
+                .text(words[i]);
+            } else {
+              node
+                .append("tspan")
+                .attr("x", 4)
+                .attr("y", y + lineNumber * lineHeight)
+                .text("…");
+              placed = true;
+              break;
+            }
+          }
+        }
+        if (!placed && line.length) {
+          node.text(line.join(" "));
+        }
+      }
+
+      // Draw treemap for selected dataset
+      const drawTreemap = (datasetKey) => {
+        const dataset = datasets[datasetKey];
+        heading.textContent = dataset.title;
+        description.textContent = dataset.description;
+        svg.selectAll("*").remove();
+        legend.selectAll("*").remove();
+
+        d3.json(dataset.url).then((data) => {
+          // Build hierarchy and layout
+          const root = d3
+            .hierarchy(data)
+            .sum((d) => d.value)
+            .sort((a, b) => b.value - a.value);
+
+          d3.treemap().size([w, h]).padding(1)(root);
+          const color = d3.scaleOrdinal(d3.schemeCategory10);
+
+          // Draw tiles
+          const tiles = svg
+            .selectAll("g")
+            .data(root.leaves())
+            .enter()
+            .append("g")
+            .attr("transform", (d) => `translate(${d.x0},${d.y0})`);
+
+          tiles
+            .append("rect")
+            .attr("class", "tile")
+            .attr("data-name", (d) => d.data.name)
+            .attr("data-category", (d) => d.data.category)
+            .attr("data-value", (d) => d.data.value)
+            .attr("width", (d) => d.x1 - d.x0)
+            .attr("height", (d) => d.y1 - d.y0)
+            .attr("fill", (d) => color(d.data.category))
+            // Tooltip events for desktop (mouseover) and mobile (tap)
+            .on("mousemove", (event, d) => {
+              const tooltipWidth = 220;
+              const left =
+                event.pageX + 20 + tooltipWidth > window.innerWidth
+                  ? event.pageX - tooltipWidth - 20
+                  : event.pageX + 20;
+              tooltip
+                .style("opacity", 1)
+                .style("left", left + "px")
+                .style("top", event.pageY + 10 + "px")
+                .attr("data-value", d.data.value)
+                .html(
+                  `<strong>${d.data.name}</strong><br>
+                   Category: ${d.data.category}<br>
+                   Value: ${d.data.value}`
+                );
+            })
+            .on("mouseout", () => {
+              tooltip.style("opacity", 0);
+            })
+            .on("touchstart", (event, d) => {
+              event.preventDefault();
+              const updateTooltip = (e) => {
+                const touch = e.touches[0];
+                tooltip
+                  .style("opacity", 1)
+                  .style("left", touch.pageX + 10 + "px")
+                  .style("top", touch.pageY + 10 + "px")
+                  .attr("data-value", d.data.value)
+                  .html(
+                    `<strong>${d.data.name}</strong><br>
+                     Category: ${d.data.category}<br>
+                     Value: ${d.data.value}`
+                  );
+              };
+              updateTooltip(event);
+              event.target.addEventListener("touchmove", updateTooltip);
+              // Do NOT hide tooltip on touchend; keep it visible
+              event.target.addEventListener(
+                "touchend",
+                () => {
+                  event.target.removeEventListener("touchmove", updateTooltip);
+                },
+                { once: true }
+              );
+            });
+
+          // Hide tooltip on tap/click outside the diagram (mobile and desktop)
+          function hideTooltipIfOutside(event) {
+            const treemap = document.getElementById("treemap");
+            if (!event.target.closest("#treemap")) {
+              tooltip.style("opacity", 0);
+            }
+          }
+          document.body.addEventListener("touchstart", hideTooltipIfOutside);
+          document.body.addEventListener("mousedown", hideTooltipIfOutside);
+
+          // Add text labels
+          tiles
+            .append("text")
+            .attr("x", 4)
+            .attr("y", 12)
+            .attr("font-size", "10px")
+            .each(function (d) {
+              wrapAndTruncateText(d3.select(this), d);
+            });
+
+          // Legend
+          const categories = [
+            ...new Set(root.leaves().map((d) => d.data.category)),
+          ];
+          const legendItemSize = 15;
+
+          const legendItems = legend
+            .selectAll("g")
+            .data(categories)
+            .enter()
+            .append("g")
+            .attr(
+              "transform",
+              (d, i) => `translate(${(i % 4) * 220}, ${Math.floor(i / 4) * 20})`
+            );
+
+          legendItems
+            .append("rect")
+            .attr("class", "legend-item")
+            .attr("width", legendItemSize)
+            .attr("height", legendItemSize)
+            .attr("fill", (d) => color(d));
+
+          legendItems
+            .append("text")
+            .attr("x", legendItemSize + 5)
+            .attr("y", legendItemSize - 2)
+            .attr("font-size", "12px")
+            .text((d) => d);
+        });
+      };
+
+      // Navigation button events
+      const buttons = document.querySelectorAll(".nav-button");
+      buttons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          buttons.forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          drawTreemap(btn.dataset.dataset);
+        });
+      });
+
+      // Initialize with Video Game Sales
+      document
+        .querySelector('.nav-button[data-dataset="video"]')
+        .classList.add("active");
+      drawTreemap("video");
+    </script>
+  </body>
+</html>
