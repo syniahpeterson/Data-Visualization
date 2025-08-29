@@ -96,11 +96,17 @@
       }
 
       #treemap-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        overflow-x: auto;
+        display: block;
         width: 100%;
+        overflow-x: auto; /* enables horizontal scroll */
+        -webkit-overflow-scrolling: touch; /* smooth scroll on mobile */
+      }
+
+      #treemap {
+        min-width: 960px; /* keep designed size */
+        height: auto;
+        display: block;
+        margin: 0 auto;
       }
 
       .tile {
@@ -169,7 +175,7 @@
     </style>
   </head>
   <body>
-    <!-- Navigation for dataset selection -->
+    <!-- Navigation bar for dataset selection and mode toggle -->
     <nav>
       <button class="nav-button" data-dataset="video">Video Game Sales</button>
       <button class="nav-button" data-dataset="movies">Movie Sales</button>
@@ -196,7 +202,6 @@
     <svg id="legend" width="960" height="120"></svg>
 
     <script>
-      // Data loading, treemap rendering, and interactivity
       // Dataset URLs and metadata
       const datasets = {
         video: {
@@ -225,7 +230,22 @@
       const heading = document.getElementById("title");
       const description = document.getElementById("description");
 
-      // Helper: wrap and truncate text in treemap tiles
+      // Color schemes for light and dark mode
+      const lightColors = d3.schemeCategory10;
+      const darkColors = [
+        "#9b5de5",
+        "#f15bb5",
+        "#fee440",
+        "#00bbf9",
+        "#00f5d4",
+        "#ff6f61",
+        "#6a0572",
+        "#ffb347",
+        "#3c6e71",
+        "#ffba08",
+      ];
+
+      // Helper function: wrap and truncate text in treemap tiles
       function wrapAndTruncateText(selection, d) {
         const node = selection;
         const words = d.data.name.split(/\s+/);
@@ -272,7 +292,7 @@
         }
       }
 
-      // Draw treemap for selected dataset
+      // Main function: draw treemap for selected dataset
       const drawTreemap = (datasetKey) => {
         const dataset = datasets[datasetKey];
         heading.textContent = dataset.title;
@@ -288,7 +308,13 @@
             .sort((a, b) => b.value - a.value);
 
           d3.treemap().size([w, h]).padding(1)(root);
-          const color = d3.scaleOrdinal(d3.schemeCategory10);
+
+          // Choose palette based on mode
+          const color = d3.scaleOrdinal(
+            document.body.classList.contains("dark-mode")
+              ? darkColors
+              : lightColors
+          );
 
           // Draw tiles
           const tiles = svg
@@ -307,22 +333,30 @@
             .attr("width", (d) => d.x1 - d.x0)
             .attr("height", (d) => d.y1 - d.y0)
             .attr("fill", (d) => color(d.data.category))
-            // Tooltip events for desktop (mouseover) and mobile (tap)
+            // Tooltip events
             .on("mousemove", (event, d) => {
               const tooltipWidth = 220;
               const left =
                 event.pageX + 20 + tooltipWidth > window.innerWidth
                   ? event.pageX - tooltipWidth - 20
                   : event.pageX + 20;
+
               tooltip
                 .style("opacity", 1)
                 .style("left", left + "px")
                 .style("top", event.pageY + 10 + "px")
                 .attr("data-value", d.data.value)
+                .style("background", color(d.data.category)) // match tile color
+                .style(
+                  "color",
+                  document.body.classList.contains("dark-mode")
+                    ? "#000"
+                    : "#fff"
+                )
                 .html(
                   `<strong>${d.data.name}</strong><br>
-                   Category: ${d.data.category}<br>
-                   Value: ${d.data.value}`
+               Category: ${d.data.category}<br>
+               Value: ${d.data.value}`
                 );
             })
             .on("mouseout", () => {
@@ -337,15 +371,21 @@
                   .style("left", touch.pageX + 10 + "px")
                   .style("top", touch.pageY + 10 + "px")
                   .attr("data-value", d.data.value)
+                  .style("background", color(d.data.category))
+                  .style(
+                    "color",
+                    document.body.classList.contains("dark-mode")
+                      ? "#000"
+                      : "#fff"
+                  )
                   .html(
                     `<strong>${d.data.name}</strong><br>
-                     Category: ${d.data.category}<br>
-                     Value: ${d.data.value}`
+                 Category: ${d.data.category}<br>
+                 Value: ${d.data.value}`
                   );
               };
               updateTooltip(event);
               event.target.addEventListener("touchmove", updateTooltip);
-              // Do NOT hide tooltip on touchend; keep it visible
               event.target.addEventListener(
                 "touchend",
                 () => {
@@ -355,7 +395,7 @@
               );
             });
 
-          // Hide tooltip on tap/click outside the diagram (mobile and desktop)
+          // Hide tooltip if tapping/clicking outside
           function hideTooltipIfOutside(event) {
             const treemap = document.getElementById("treemap");
             if (!event.target.closest("#treemap")) {
@@ -407,10 +447,9 @@
         });
       };
 
-      // Navigation button events
+      // Navigation button events for dataset switching
       const buttons = document.querySelectorAll(".nav-button");
       buttons.forEach((btn) => {
-        // Skip mode toggle button for dataset switching
         if (btn.id === "mode-toggle") return;
         btn.addEventListener("click", () => {
           buttons.forEach((b) => b.classList.remove("active"));
@@ -426,6 +465,12 @@
         darkMode = !darkMode;
         document.body.classList.toggle("dark-mode", darkMode);
         modeToggle.textContent = darkMode ? "☀️ Light Mode" : "🌙 Dark Mode";
+
+        // Redraw with new colors
+        const activeBtn = document.querySelector(".nav-button.active");
+        if (activeBtn) {
+          drawTreemap(activeBtn.dataset.dataset);
+        }
       });
 
       // Initialize with Video Game Sales
